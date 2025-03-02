@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, List, Type
 
 from sqlalchemy.orm import Session
 
@@ -10,16 +10,21 @@ from app.schemas.user import UserCreate, UserUpdate
 
 class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
     def get_by_email(self, db: Session, *, email: str) -> Optional[User]:
+        """
+        Get a user by email.
+        """
         return db.query(User).filter(User.email == email).first()
 
     def create(self, db: Session, *, obj_in: UserCreate) -> User:
+        """
+        Create a new user with hashed password.
+        """
         db_obj = User(
             email=obj_in.email,
-            phone=obj_in.phone,
-            first_name=obj_in.first_name,
-            last_name=obj_in.last_name,
             hashed_password=get_password_hash(obj_in.password),
-            is_active=obj_in.is_active,
+            full_name=obj_in.full_name,
+            is_active=obj_in.is_active if hasattr(obj_in, "is_active") else True,
+            phone=obj_in.phone if hasattr(obj_in, "phone") else None,
         )
         db.add(db_obj)
         db.commit()
@@ -29,10 +34,13 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
     def update(
             self, db: Session, *, db_obj: User, obj_in: Union[UserUpdate, Dict[str, Any]]
     ) -> User:
+        """
+        Update a user.
+        """
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
-            update_data = obj_in.model_dump(exclude_unset=True)
+            update_data = obj_in.dict(exclude_unset=True)
         if update_data.get("password"):
             hashed_password = get_password_hash(update_data["password"])
             del update_data["password"]
@@ -40,6 +48,9 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         return super().update(db, db_obj=db_obj, obj_in=update_data)
 
     def authenticate(self, db: Session, *, email: str, password: str) -> Optional[User]:
+        """
+        Authenticate a user by email and password.
+        """
         user = self.get_by_email(db, email=email)
         if not user:
             return None
@@ -48,10 +59,16 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         return user
 
     def is_active(self, user: User) -> bool:
+        """
+        Check if a user is active.
+        """
         return user.is_active
 
-    def is_admin(self, user: User) -> bool:
-        return user.is_admin
+    def get_users_by_ids(self, db: Session, *, user_ids: List[int]) -> List[Type[User]]:
+        """
+        Get multiple users by their IDs.
+        """
+        return db.query(User).filter(User.id.in_(user_ids)).all()
 
 
-user = CRUDUser(User)
+crud_user = CRUDUser(User)
