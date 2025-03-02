@@ -1,37 +1,38 @@
 from typing import Optional
 from datetime import datetime
-
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class ProductBase(BaseModel):
     name: str
     description: Optional[str] = None
-    price: float = Field(..., gt=0)
+    price: float
     image_url: Optional[str] = None
     category: Optional[str] = None
-    is_available: Optional[bool] = True
-    stock_quantity: Optional[int] = 0
+    is_available: bool = True
 
 
 class ProductCreate(ProductBase):
     pass
 
 
-class ProductUpdate(ProductBase):
+class ProductUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
-    price: Optional[float] = Field(None, gt=0)
+    price: Optional[float] = None
     image_url: Optional[str] = None
     category: Optional[str] = None
     is_available: Optional[bool] = None
-    stock_quantity: Optional[int] = None
 
 
-class ProductRead(ProductBase):
-    id: str
+class ProductInDBBase(ProductBase):
+    id: int
     created_at: datetime
-    updated_at: datetime
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
+
+
+class Product(ProductInDBBase):
+    pass
