@@ -12,11 +12,6 @@ class OrderService:
         self.db = db
 
     def create_order(self, order_in: OrderCreate, user_id: int) -> Order:
-        """
-        Create a new order with the provided products.
-        Calculate the total price and create the order.
-        """
-        # Calculate the total order price
         total_price = 0
         order_items = []
 
@@ -35,7 +30,6 @@ class OrderService:
                 "total": item_price
             })
 
-        # Create the order with calculated total
         order_data = OrderCreate(
             address_id=order_in.address_id,
             status=OrderStatus.PENDING,
@@ -52,14 +46,10 @@ class OrderService:
         return order
 
     def cancel_order(self, order_id: int) -> Order:
-        """
-        Cancel an order if it's still in a cancellable state.
-        """
         order = crud_order.get(self.db, id=order_id)
         if not order:
             raise ValueError(f"Order with ID {order_id} not found")
 
-        # Check if order is in a cancellable state
         if order.status in OrderStatus.DELIVERED:
             raise ValueError(f"Cannot cancel order in {order.status} state")
 
@@ -69,14 +59,10 @@ class OrderService:
         return updated_order
 
     def get_order_details(self, order_id: int) -> Dict[str, Any]:
-        """
-        Get detailed information about an order including products.
-        """
         order = crud_order.get(self.db, id=order_id)
         if not order:
             raise ValueError(f"Order with ID {order_id} not found")
 
-        # Get order items with product details
         items_with_details = []
         for item in order.items:
             product = crud_product.get(self.db, id=item.product_id)
@@ -100,14 +86,10 @@ class OrderService:
         }
 
     def update_order_status(self, order_id: int, status: OrderStatus) -> Order:
-        """
-        Update the status of an order.
-        """
         order = crud_order.get(self.db, id=order_id)
         if not order:
             raise ValueError(f"Order with ID {order_id} not found")
 
-        # Validate status transition
         if order.status == OrderStatus.CANCELLED and status != OrderStatus.CANCELLED:
             raise ValueError("Cannot change status of a cancelled order")
 

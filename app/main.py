@@ -28,4 +28,4 @@ async def startup_event():
 
 @app.get("/")
 async def root():
-    return {"message": "Добро пожаловать в DeliveryAPI! Документация доступна по адресу /docs"}
+    return {"message": "Добро пожаловать в DeliveryAPI!"}
